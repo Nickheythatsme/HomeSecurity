@@ -1,7 +1,7 @@
 /*
-    This sketch establishes a TCP connection to a "quote of the day" service.
-    It sends a "hello" message, and then prints received data.
-*/
+ * Nicholas Grout
+ * 9/4/2020
+ */
 
 #include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
@@ -13,15 +13,16 @@
 #include "helper.hpp"
 #include "system_utils.hpp"
 
-const char* ssid     = STASSID;
-const char* password = STAPSK;
+const char *ssid = STASSID;
+const char *password = STAPSK;
 
-const char* host = "192.168.1.205";
+const char *host = "192.168.1.205";
 const uint16_t PORT = 8000;
 
 #define DEBUG
 
-void setup() {
+void setup()
+{
   Serial.begin(115200);
 
   // We start by connecting to a WiFi network
@@ -37,7 +38,8 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
 
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED)
+  {
     delay(500);
     Serial.print(".");
   }
@@ -52,8 +54,8 @@ void setup() {
   led_off();
 }
 
-
-void print_wifi_status() {
+void print_wifi_status()
+{
   // print the SSID of the network you're attached to:
   Serial.print("SSID: ");
   Serial.println(WiFi.SSID());
@@ -73,15 +75,17 @@ void print_wifi_status() {
 /*
  * Test whether the current ip address is the base ip address.
  */
-bool is_base_ip_address(WiFiClient &client, const char *host) {
-  if (!client.connect(host, PORT)) {
-    #ifdef DEBUG
+bool is_base_ip_address(WiFiClient &client, const char *host)
+{
+  if (!client.connect(host, PORT))
+  {
+#ifdef DEBUG
     Serial.print("connection to ");
     Serial.print(host);
     Serial.print(":");
     Serial.print(PORT);
     Serial.println(" failed.");
-    #endif
+#endif
     client.stop();
     return false;
   }
@@ -91,12 +95,15 @@ bool is_base_ip_address(WiFiClient &client, const char *host) {
 /*
  * Find the base ip address from a starting ip address.
  */
-const char* find_base_ip_address(WiFiClient &client, const char *starting_ip, int starting_ip_end) {
+const char *find_base_ip_address(WiFiClient &client, const char *starting_ip, int starting_ip_end)
+{
   std::string starting_ip_str(starting_ip);
-  for (int i=starting_ip_end; i<starting_ip_end + 100; ++i) {
+  for (int i = starting_ip_end; i < starting_ip_end + 100; ++i)
+  {
     std::string current_ip = (starting_ip) + helper::long_to_string(i);
     bool success = is_base_ip_address(client, current_ip.c_str());
-    if (success) {
+    if (success)
+    {
       Serial.print("Valid ip address: ");
       Serial.println(current_ip.c_str());
       return current_ip.c_str();
@@ -105,29 +112,32 @@ const char* find_base_ip_address(WiFiClient &client, const char *starting_ip, in
   return NULL;
 }
 
-bool request_get(WiFiClient &client, const char* path)
+bool request_get(WiFiClient &client, const char *path)
 {
-  #ifdef DEBUG
+#ifdef DEBUG
   Serial.print("Sending request to: \"");
   Serial.print(path);
   Serial.println("\"");
-  #endif // DEBUG
+#endif // DEBUG
   std::string full_request = std::string("GET ") + std::string(path) + std::string(" HTTP/1.1");
   client.println(full_request.c_str());
   client.println("Connection: close");
   client.println();
   delay(500);
-  while (client.available()) {
+  while (client.available())
+  {
     char c = client.read();
     Serial.write(c);
   }
   return false;
 }
 
-void loop() {
-  while(true) {
+void loop()
+{
+  while (true)
+  {
     WiFiClient client;
-    find_base_ip_address(client, "192.168.1.",197);
+    find_base_ip_address(client, "192.168.1.", 197);
     led_on();
     print_wifi_status();
     request_get(client, "/nick");
