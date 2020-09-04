@@ -49,7 +49,7 @@ void setup() {
 
   // Setup blinking LED
   pinMode(LED_BUILTIN, OUTPUT);
-  //led_blink(1, 250);
+  led_off();
 }
 
 
@@ -121,7 +121,6 @@ bool request_get(WiFiClient &client, const char* path)
     char c = client.read();
     Serial.write(c);
   }
-  Serial.println("Finished");
   return false;
 }
 
@@ -133,6 +132,6 @@ void loop() {
     print_wifi_status();
     request_get(client, "/nick");
     led_off();
-    delay(10000);
+    fail("Finished");
   }
 }

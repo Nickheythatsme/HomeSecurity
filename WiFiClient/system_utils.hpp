@@ -3,11 +3,13 @@
 
 void led_on()
 {
+  Serial.println("LED ON");
   digitalWrite(LED_BUILTIN, LOW);
 }
 
 void led_off()
 {
+  Serial.println("LED OFF");
   digitalWrite(LED_BUILTIN, HIGH);
 }
 
