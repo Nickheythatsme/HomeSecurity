@@ -1,1 +1,0 @@
-message (STATUS "Including src directory")
