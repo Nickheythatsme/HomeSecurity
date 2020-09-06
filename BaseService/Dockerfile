@@ -7,8 +7,14 @@ RUN apt update \
     && apt install -y build-essential g++ python-dev autotools-dev \
     libicu-dev libbz2-dev
 
+# Install required python files
 COPY requirements.txt .
 RUN python3 -m pip install -r requirements.txt
+
+
+# Build and Install boost
+COPY scripts ./scripts
+RUN ./scripts/install_boost
 
 COPY . .
 
