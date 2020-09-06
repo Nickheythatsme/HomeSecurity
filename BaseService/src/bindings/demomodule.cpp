@@ -27,7 +27,7 @@ baseservice_system(PyObject *self, PyObject *args)
 static PyObject *
 baseservice_init(PyObject *self, PyObject *args)
 {
-    Listener *listener = new Listener();
+    Listener listener;
     Py_RETURN_NONE;
 }
 

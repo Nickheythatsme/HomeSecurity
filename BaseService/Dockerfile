@@ -16,4 +16,6 @@ RUN cd /srv \
     && python3 setup.py build \
     && python3 setup.py install
 
-CMD ["/bin/bash"]
+EXPOSE 8000
+
+CMD ["/usr/local/bin/python3", "/srv/scratch.py"]

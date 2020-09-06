@@ -47,5 +47,10 @@ Listener::Listener()
     std::cout << "Listening on " << PORT << '\n';
 }
 
+Listener::~Listener()
+{
+    close(this->server_fd);
+}
+
 } // ns NETWORKING
 } // ns BASE_SERVICE
