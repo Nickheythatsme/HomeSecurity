@@ -17,7 +17,7 @@ Listener::Listener()
 
     if ((this->server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) 
     { 
-        std::cerr << "socket failed\n";
+        std::cerr << "socket failed" << strerror(errno) << '\n';
         exit(EXIT_FAILURE); 
     }
 
@@ -25,7 +25,7 @@ Listener::Listener()
     if (setsockopt(this->server_fd, SOL_SOCKET, SO_REUSEADDR, 
                                                   &opt, sizeof(opt))) 
     { 
-        perror("setsockopt"); 
+        std::cerr << "setsockopt" << strerror(errno) << '\n';
         exit(EXIT_FAILURE); 
     } 
     address.sin_family = AF_INET; 
@@ -36,20 +36,34 @@ Listener::Listener()
     if (bind(this->server_fd, (struct sockaddr *)&address,  
                                  sizeof(address))<0) 
     { 
-        std::cerr << "bind failed\n";
+        std::cerr << "bind failed" << strerror(errno) << '\n';
         exit(EXIT_FAILURE); 
     } 
     if (listen(this->server_fd, 3) < 0) 
     { 
-        std::cerr << "listen\n";
+        std::cerr << "listen failed" << strerror(errno) << '\n';
         exit(EXIT_FAILURE); 
     } 
-    std::cout << "Listening on " << PORT << '\n';
 }
 
 Listener::~Listener()
 {
     close(this->server_fd);
+}
+
+void Listener::do_listen()
+{
+    int new_fd, msg_len;
+    char buff[1024];
+    struct sockaddr_storage their_addr;
+    socklen_t addr_size;
+
+    addr_size = sizeof their_addr;
+    std::cout << "Listening on " << PORT << '\n';
+    new_fd = accept(this->server_fd, (struct sockaddr *)&their_addr, &addr_size);
+    std::cout << "Accepting new connection\n";
+    recv(new_fd, buff, 1024, 0);
+    std::cout << "Message contents: \"" << buff << "\"\n";
 }
 
 } // ns NETWORKING

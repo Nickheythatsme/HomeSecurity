@@ -5,6 +5,7 @@ Nicholas Grout 9/5/2020
 Download and install Boost for unix
 """
 import os
+import time
 import tarfile
 import subprocess
 from requests import get as rget
@@ -17,32 +18,51 @@ BOOST_ZIP_FILENAME = 'boost.tar.gz'
 
 @contextmanager
 def get_stdout():
-    fout = open('/dev/stdout', 'w')
+    fout = open('/dev/stdout', 'a')
     yield fout
     fout.close()
 
 
-def download_boost_zip(boost_url: str = BOOST_DOWNLOAD_URL_UNIX, boost_zip_filename: str = BOOST_ZIP_FILENAME) -> str:
+def check_root():
+    proc = subprocess.run(['id', '-u'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if proc.returncode:
+        raise RuntimeError('Error determining if root. "{}"'.format(
+            proc.stdout.endcode('utf8') + proc.stderr.decode('utf8')
+        ))
+    return proc.stdout.decode('utf8').strip() == '0'
+
+
+def download_boost_zip(boost_url: str = BOOST_DOWNLOAD_URL_UNIX, zip_filename: str = BOOST_ZIP_FILENAME) -> str:
     req = rget(boost_url, allow_redirects=True, stream=True)
     with get_stdout() as std_out:
-        print('Downloading boost zip to "{}"'.format(boost_zip_filename), file=std_out)
-        content_length = int(req.headers.get('Content-Length', 1))
-        current_content_length = 0
-        modulator = 0
-        with open(boost_zip_filename, 'wb') as fout:
-            for chunk in req.iter_content(chunk_size=2048):
-                current_content_length += fout.write(chunk)
-                modulator += 1
-                if modulator % 500 == 0:
-                        print('{:2.2f}%'.format((current_content_length / content_length) * 100), end='\r', file=std_out)
-            print('{:2.2f}%'.format((current_content_length / content_length) * 100), end='\r', file=std_out)
-        return boost_zip_filename
+        print('Downloading boost zip to "{}"'.format(zip_filename), file=std_out)
+    content_length = int(req.headers.get('Content-Length', 1))
+    current_content_length = 0
+    modulator = 0
+    with open(zip_filename, 'wb') as fout:
+        for chunk in req.iter_content(chunk_size=2048):
+            current_content_length += fout.write(chunk)
+            modulator += 1
+            if modulator % 500 == 0:
+                with get_stdout() as std_out:
+                    print(
+                        '{:2.2f}%'.format((current_content_length / content_length) * 100),
+                        end='\r',
+                        file=std_out
+                    )
+    with get_stdout() as std_out:
+        print(
+            '{:2.2f}%'.format((current_content_length / content_length) * 100),
+            file=std_out
+        )
+    return zip_filename
 
 
 def unzip_boost(zip_filename: str = BOOST_ZIP_FILENAME) -> str:
     tar = tarfile.open(zip_filename)
     unzip_dir = tar.getmembers()[0]
-    print('Unzipping boost to "{}"'.format(unzip_dir.name))
+    with get_stdout() as std_out:
+        print('Unzipping boost to "{}"'.format(unzip_dir.name), file=std_out)
     tar.extractall()
     tar.close()
     return unzip_dir.name
@@ -63,13 +83,16 @@ def build_boost(boost_dir: str):
 def install_boost(boost_dir: str):
     original_dir = os.getcwd()
     os.chdir(boost_dir)
-    proc = subprocess.run(['./b2 install'])
+    proc = subprocess.run(['./b2', 'install'])
     if proc.returncode:
         raise RuntimeError('Error installing boost with b2. Check output above.')
     os.chdir(original_dir)
 
 
 if __name__ == "__main__":
+    if not check_root():
+        print('WARNING: user not root. May not be able to install!', file=open('/dev/stderr', 'w'))
+        time.sleep(5)
     boost_zip_filename = download_boost_zip()
     boost_unzip_dir = unzip_boost()
     os.remove(boost_zip_filename)
