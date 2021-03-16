@@ -2,11 +2,12 @@ import json
 import http.server
 
 from http import HTTPStatus
+from .sound_player import SoundPlayer
 
 
 class SensorHandler(http.server.CGIHTTPRequestHandler):
     def play_sound(self):
-        pass
+        SoundPlayer.play_door_open()
 
     def send_success(self):
         self.send_response(HTTPStatus.OK)
