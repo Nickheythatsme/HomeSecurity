@@ -26,6 +26,7 @@ const uint8_t inPin = D5;
 
 // Wi-Fi settings - replace with your Wi-Fi SSID and password, in quotes
 String address;
+bool door_is_open_prev;
 
 // This is the setup section and will only run one time
 void setup()
@@ -71,6 +72,8 @@ void setup()
     Serial.print("Connected to network. IP address: ");
     Serial.println(WiFi.localIP());
     address = find_base_address();
+    Serial.print("Using host address: ");
+    Serial.println(address);
 }
 
 bool is_base_ip_address(WiFiClient &client, String host)
@@ -92,9 +95,9 @@ String find_base_address()
     // Starting ip address, used when trying to find host
     String base_ip = "192.168.1.";
     WiFiClient client;
-    for (int i = STARTING_IP_LAST_QUAD; i < STARTING_IP_LAST_QUAD + MAX_HOST_IP_ATTEMPTS; ++i)
+    for (uint16_t i = STARTING_IP_LAST_QUAD; i < STARTING_IP_LAST_QUAD + MAX_HOST_IP_ATTEMPTS; ++i)
     {
-        String address = base_ip + String(i);
+        address = base_ip + String(i);
         if (is_base_ip_address(client, address))
         {
             return String("http://") + address + ":" + String(PORT);
@@ -106,83 +109,68 @@ String find_base_address()
 // main loop
 void loop()
 {
-    String postData;
-
     // This is the minimum amount of time to wait before
     // reading the sensor
     delay(DELAYTIME);
 
     // Store sensor state
     // State is "true" if door is open
-    String door_state;
+    bool door_is_open;
 
     if (digitalRead(inPin) == LOW)
     {
-        door_state = "false";
+        door_is_open = false;
     }
     else
     {
-        door_state = "true";
+        door_is_open = true;
     }
 
-    Serial.println(door_state);
+    Serial.println("door_is_open: ");
+    Serial.println(String(door_is_open));
 
-    // Build a string with data to send to JEDI. The format is
-    // {
-    //    "context": {
-    //        "target_id" : "Sensor1"
-    //    },
-    //    "data": {
-    //        "metric1" : metric_value,
-    //        "metric2" : metric_value
-    //    }
-    // }
-    //
-    // Replace metric1 with what ever data metrics that you are
-    // sending to JEDI. Replace metric_value with the value of
-    // the metric. If you have more than one sensor, set the
-    // target_id with the name of the sensor.
-
-    //Modify the post data to include door_state
-
-    postData = "{\"context\":{\"target_id\":\"Entry_Sensor\"}, \"data\":{\"door_open\":" + String(door_state) +
-               " }}";
-
-    WiFiClient client;
-    HTTPClient http;
-
-    //String address = String("http://") + String(host) + String("/v1/data/mc");
-    Serial.print("Using host address: ");
-    Serial.println(address);
-    http.begin(client, address);
-    http.addHeader("Content-Type", "application/json");
-    int httpCode = http.POST(postData);
-
-    // httpCode will be negative on error
-    if (httpCode > 0)
+    if (door_is_open != door_is_open_prev)
     {
-        // HTTP header has been send and Server response header has been handled
-        Serial.printf("[HTTP] POST... code: %d\n", httpCode);
+        String post_data;
 
-        // file found at server
-        if (httpCode == HTTP_CODE_OK)
-        {
-            const String &payload = http.getString();
-            Serial.print("received payload:  ");
-            Serial.println(payload);
+        // Make the payload response
+        if (door_is_open) {
+            post_data = "{\"context\":{\"target_id\":\"Entry_Sensor\"}, \"data\":{\"door_open\": true}}";
+        } else {
+            post_data = "{\"context\":{\"target_id\":\"Entry_Sensor\"}, \"data\":{\"door_open\": false}}";
         }
+        WiFiClient client;
+        HTTPClient http;
+
+        http.begin(client, address);
+        http.addHeader("Content-Type", "application/json");
+        int httpCode = http.POST(post_data);
+
+        // httpCode will be negative on error
+        if (httpCode > 0)
+        {
+            // HTTP header has been send and Server response header has been handled
+            Serial.printf("[HTTP] POST... code: %d\n", httpCode);
+
+            // file found at server
+            if (httpCode == HTTP_CODE_OK)
+            {
+                const String &payload = http.getString();
+                Serial.print("received payload:  ");
+                Serial.println(payload);
+            }
+        }
+        else
+        {
+            Serial.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
+        }
+
+        http.end(); //Close connection
+        // Blink the status LED
+        digitalWrite(LED_BUILTIN, LOW);
+        delay(200);
+        digitalWrite(LED_BUILTIN, HIGH);
+        // Store the new sensor value
+        door_is_open_prev = door_is_open;
     }
-    else
-    {
-        Serial.printf("[HTTP] POST... failed, error: %s\n", http.errorToString(httpCode).c_str());
-    }
-
-    http.end(); //Close connection
-
-    // Blink the status LED
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(200);
-    digitalWrite(LED_BUILTIN, HIGH);
-
-    delay(1000);
 }

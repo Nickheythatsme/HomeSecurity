@@ -1,17 +1,9 @@
-import http.server
-import socketserver
-
-from http import HTTPStatus
-
-PORT = 8000
-
-Handler = http.server.SimpleHTTPRequestHandler
 
 
-class Myhandler(http.server.CGIHTTPRequestHandler):
+class SensorHandler(http.server.CGIHTTPRequestHandler):
+    def play_sound(self):
+
     def do_POST(self):
-        #print('path: ' + self.path)
-        #print('requestline: ' + self.requestline)
         rawData = (self.rfile.read(int(self.headers['content-length']))).decode('utf-8')
         print('data: ' + rawData)
         self.send_response(200, "done")
@@ -22,7 +14,3 @@ class Myhandler(http.server.CGIHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-
-with socketserver.TCPServer(("", PORT), Myhandler) as httpd:
-    print("serving at port", PORT)
-    httpd.serve_forever()
