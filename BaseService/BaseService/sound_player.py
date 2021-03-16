@@ -18,7 +18,7 @@ class SoundPlayer:
         if not os.path.exists(cls.DOOR_OPEN_FILE):
             raise MissingAssetException(cls.DOOR_OPEN_FILE)
         if platform == "linux" or platform == "linux2":
-            proc = subprocess.Popen(["play", "ping.mp3"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            proc = subprocess.Popen(["play", cls.DOOR_OPEN_FILE], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                     stderr=subprocess.PIPE)
             if proc.returncode != 0:
                 cls.logger.warning(
