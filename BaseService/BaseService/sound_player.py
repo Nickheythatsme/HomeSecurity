@@ -23,8 +23,8 @@ class SoundPlayer:
             proc = subprocess.Popen(**popen_kwargs)
             return_code = proc.returncode
             proc = subprocess.Popen(**popen_kwargs)
-            return_code += proc.returncode
-            if return_code != 0:
+            return_code = return_code or proc.returncode
+            if return_code:
                 cls.logger.warning(
                     "Error playing sound file: %s\n%s",
                     proc.stdout.read(),
