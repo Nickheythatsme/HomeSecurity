@@ -3,6 +3,7 @@
  * 3/15/2021
  */
 
+#include "C:\Users\nick\AppData\Local\Arduino15\packages\esp8266\tools\xtensa-lx106-elf-gcc\2.5.0-4-b40a506\lib\gcc\xtensa-lx106-elf\4.8.2\include\stdint.h"
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include "secrets.h"
@@ -95,15 +96,17 @@ String find_base_address()
     // Starting ip address, used when trying to find host
     String base_ip = "192.168.1.";
     WiFiClient client;
-    for (uint16_t i = STARTING_IP_LAST_QUAD; i < STARTING_IP_LAST_QUAD + MAX_HOST_IP_ATTEMPTS; ++i)
-    {
-        address = base_ip + String(i);
-        if (is_base_ip_address(client, address))
+    while(true) {
+        for (uint16_t i = STARTING_IP_LAST_QUAD; i < STARTING_IP_LAST_QUAD + MAX_HOST_IP_ATTEMPTS; ++i)
         {
-            return String("http://") + address + ":" + String(PORT);
+            address = base_ip + String(i);
+            if (is_base_ip_address(client, address))
+            {
+                blink_led(2, 100);
+                return String("http://") + address + ":" + String(PORT);
+            }
         }
     }
-    fail("Could not find host address");
 }
 
 // main loop
@@ -152,7 +155,6 @@ void loop()
             // HTTP header has been send and Server response header has been handled
             Serial.printf("[HTTP] POST... code: %d\n", httpCode);
 
-            // file found at server
             if (httpCode == HTTP_CODE_OK)
             {
                 const String &payload = http.getString();
@@ -167,9 +169,7 @@ void loop()
 
         http.end(); //Close connection
         // Blink the status LED
-        digitalWrite(LED_BUILTIN, LOW);
-        delay(200);
-        digitalWrite(LED_BUILTIN, HIGH);
+        blink_led(2, 100);
         // Store the new sensor value
         door_is_open_prev = door_is_open;
     }

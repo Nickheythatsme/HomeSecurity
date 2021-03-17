@@ -1,6 +1,7 @@
 import os
 import logging
 import subprocess
+from random import choice
 
 from sys import platform
 
@@ -14,20 +15,23 @@ class SoundPlayer:
     DOOR_OPEN_FILE = os.path.join(ASSETS_DIR, "ping.mp3")
 
     @classmethod
-    def play_door_open(cls):
-        if not os.path.exists(cls.DOOR_OPEN_FILE):
-            raise MissingAssetException(cls.DOOR_OPEN_FILE)
-        if platform == "linux" or platform == "linux2":
-            popen_kwargs = {'args': ["play", cls.DOOR_OPEN_FILE], 'stdin': subprocess.PIPE, 'stdout': subprocess.PIPE,
-                            'stderr': subprocess.PIPE}
-            proc = subprocess.Popen(**popen_kwargs)
-            return_code = proc.returncode
-            proc = subprocess.Popen(**popen_kwargs)
-            return_code = return_code or proc.returncode
-            if return_code:
+    def play_asset(cls, asset_file: str, repeat: int = 1):
+        if platform != "linux" and platform != "linux2":
+            cls.logger.warning("Sound is not supported on windows")
+            return
+        if not os.path.exists(asset_file):
+            raise MissingAssetException(asset_file)
+        for i in range(0, repeat):
+            proc = subprocess.Popen(
+                args=["play", cls.DOOR_OPEN_FILE], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+            if proc.returncode:
                 cls.logger.warning(
                     "Error playing sound file: %s\n%s",
                     proc.stdout.read(),
                     proc.stderr.read())
-        else:
-            cls.logger.warning("Sound is not supported on windows")
+
+    @classmethod
+    def play_door_open(cls):
+        cls.play_asset(cls.DOOR_OPEN_FILE)

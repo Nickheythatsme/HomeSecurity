@@ -1,6 +1,6 @@
 #include <ESP8266WiFi.h>
 
-void led_blink(int count, int delay_value)
+void blink_led(int count, int delay_value)
 {
   for (int i=0; i<count; ++i) {
     digitalWrite(LED_BUILTIN, LOW);
@@ -15,7 +15,7 @@ void fail(const char* fail_message)
   Serial.print(fail_message);
   Serial.println("\"");
   while(true) {
-    led_blink(3, 200);
+    blink_led(3, 200);
     delay(5000);
   }
 }
