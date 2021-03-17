@@ -15,4 +15,3 @@ def serve():
             httpd.serve_forever()
     except KeyboardInterrupt:
         print('Stopping due to keyboard interrupt')
-        pass

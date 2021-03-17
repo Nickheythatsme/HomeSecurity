@@ -18,12 +18,16 @@ class SoundPlayer:
         if not os.path.exists(cls.DOOR_OPEN_FILE):
             raise MissingAssetException(cls.DOOR_OPEN_FILE)
         if platform == "linux" or platform == "linux2":
-            proc = subprocess.Popen(["play", cls.DOOR_OPEN_FILE], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-            if proc.returncode != 0:
+            popen_kwargs = {'args': ["play", cls.DOOR_OPEN_FILE], 'stdin': subprocess.PIPE, 'stdout': subprocess.PIPE,
+                            'stderr': subprocess.PIPE}
+            proc = subprocess.Popen(**popen_kwargs)
+            return_code = proc.returncode
+            proc = subprocess.Popen(**popen_kwargs)
+            return_code += proc.returncode
+            if return_code != 0:
                 cls.logger.warning(
                     "Error playing sound file: %s\n%s",
-                    proc.stdout.read().decode('UTF8'),
-                    proc.stderr.read().decode('UTF8'))
+                    proc.stdout.read(),
+                    proc.stderr.read())
         else:
             cls.logger.warning("Sound is not supported on windows")
